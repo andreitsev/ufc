@@ -94,17 +94,19 @@ def get_events_list(
 	return resulting_list, status_ok
 
 
-def get_fights_info(fights_urls: List[str]) -> Dict[str, Dict[Any, Any]]:
+def get_fights_info(fights_urls: List[str]) -> Dict[str, List[Dict[Any, Any]]]:
 
 	"""
+	Parses detailed info about events
 
-	:param fights_urls: List of fights urls
-		example:
-			[
-				"http://www.ufcstats.com/event-details/319c15b8aac5bfde",
-				"http://www.ufcstats.com/event-details/31da66df48c0c1a0",
-				...
-			]
+	Args:
+		:param fights_urls: List of fights urls
+			example:
+				[
+					"http://www.ufcstats.com/event-details/319c15b8aac5bfde",
+					"http://www.ufcstats.com/event-details/31da66df48c0c1a0",
+					...
+				]
 	:return:
 		events_stats_dict: Dict with keys - fights_urls, values - dict with fight info
 	"""
@@ -124,14 +126,14 @@ def get_fights_info(fights_urls: List[str]) -> Dict[str, Dict[Any, Any]]:
 		)
 
 		stat_cols_names = (
-			soup.find_all('thead', {'class': "b-fight-details__table-head"})[0]
+			one_event.find_all('thead', {'class': "b-fight-details__table-head"})[0]
 			.find_all('th', {'class': "b-fight-details__table-col"})
 		)
 		item_number2stat_mapping = {
 			i: stat.text.strip().lower().replace('/', '_').replace(' ', '_') for i, stat in enumerate(stat_cols_names)
 		}
 
-		one_event_stats_dict = {}
+		one_event_stats_list = []
 		for i, one_fight in enumerate(fights_in_1_event):
 			one_fights_stats = one_fight.find_all('td', {"class": "b-fight-details__table-col"})
 
@@ -147,10 +149,77 @@ def get_fights_info(fights_urls: List[str]) -> Dict[str, Dict[Any, Any]]:
 				else:
 					raise ValueError("it's not expected to be more than 2 values!")
 
-			one_event_stats_dict[i] = curr_fight_stats_dict
-		events_stats_dict[event_url] = one_event_stats_dict
+			one_event_stats_list.append(curr_fight_stats_dict)
+		events_stats_dict[event_url] = one_event_stats_list
 	return events_stats_dict
 
+
+def get_fighters_info(fighters_stats_url: str=None) -> (List[Dict[str, Any]], bool):
+
+	"""
+	Parses fighters stats page
+
+	Args:
+		:param fighters_stats_url: 'http://www.ufcstats.com/statistics/fighters?char=a&page=all'
+	Returns:
+		overall_fighters_list: List of dicts with fighters info (weight, height, etc.)
+		status_ok: whether columns_names are the same across different fighters stats pages (
+			'http://www.ufcstats.com/statistics/fighters?char=a&page=all',
+			'http://www.ufcstats.com/statistics/fighters?char=b&page=all', etc.
+		)
+	"""
+
+	alphabet = 'abcdefghijklmnopqrstuvwxyz'
+	prev_columns_names_set = None
+	status_ok = True
+	overall_fighters_list = []
+	objects_set = set()
+	for letter in tqdm(alphabet):
+		if fighters_stats_url is None:
+			fighters_stats_url = f'http://www.ufcstats.com/statistics/fighters?char={letter}&page=all'
+		else:
+			fighters_stats_url = fighters_stats_url.replace("char=a", f"char={letter}")
+
+		fighters_page_for_one_letter = requests.get(fighters_stats_url)
+		fighters_page_for_one_letter = BeautifulSoup(fighters_page_for_one_letter.content, 'lxml')
+
+		columns_names = (
+			fighters_page_for_one_letter
+			.find_all('thead', {'class': "b-statistics__table-caption"})[0]
+			.find_all('th', {'class': "b-statistics__table-col"})
+		)
+		columns_names_dict = {i: col.text.strip() for i, col in enumerate(columns_names)}
+		if prev_columns_names_set is None:
+			prev_columns_names_set = set(columns_names_dict.keys())
+		if len(prev_columns_names_set.symmetric_difference(set(columns_names_dict.keys()))) > 0:
+			status_ok = False
+			warning_message = f"Set of columns is not the same! prev columns: {prev_columns_names_set}"
+			warning_message += f', current: {set(columns_names_dict.keys())}'
+			color_print(warning_message, color='red')
+
+		fighters_rows = (
+			fighters_page_for_one_letter
+			.find_all('tbody')[0]
+			.find_all('tr', {'class': "b-statistics__table-row"})
+		)
+
+		fighters_info_list = []
+		for row in fighters_rows:
+			row_statistics = row.find_all('td', {'class': "b-statistics__table-col"})
+			curr_fighter_stats_dict = {}
+			for i, statistic in enumerate(row_statistics):
+				curr_fighter_stats_dict[columns_names_dict[i]] = statistic.text.strip()
+
+			if len(curr_fighter_stats_dict) > 0:
+				# this plug is needed, because for some reason there are dubplicates of
+				# fighters during parsing
+				object_str = ''.join([f"{k}~~{v}" for k, v in curr_fighter_stats_dict.items()])
+				if object_str not in objects_set:
+					objects_set.add(object_str)
+					fighters_info_list.append(curr_fighter_stats_dict)
+
+		overall_fighters_list.extend(fighters_info_list)
+	return overall_fighters_list, status_ok
 
 
 
