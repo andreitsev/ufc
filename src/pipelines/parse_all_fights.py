@@ -4,11 +4,10 @@ import json
 from tqdm import tqdm
 import time
 from datetime import datetime
-from argparse import ArgumentParser
+import argparse
 from typing import List, Tuple, Dict, Set, Any, Optional, Callable, Union
 if 'PYTHONPATH' in os.environ:
 	PROJECT_PATH = os.environ["PYTHONPATH"]
-	#os.chdir(PROJECT_PATH)
 	sys.path.insert(0, PROJECT_PATH)
 else:
 	PROJECT_PATH = '..'
@@ -28,7 +27,7 @@ from src.parse_utils import get_events_list, get_one_fight_stats
 
 def parse_cli():
 
-	parser = ArgumentParser()
+	parser = argparse.ArgumentParser()
 	parser.add_argument(
 		"--save_path",
 		help='Where to save parsed fights',
@@ -39,7 +38,7 @@ def parse_cli():
 	args = parser.parse_args()
 	return args
 
-def parse_all_fights(save_path: str=None) -> List[Dict[str], Any]:
+def parse_all_fights(save_path: str=None) -> List[Dict[str, Any]]:
 
 	"""
 	Parses all fights and returns list of dicts with fights statistics
@@ -89,10 +88,16 @@ if __name__ == '__main__':
 	today = str(datetime.now().date())
 	print(f'today: {today}')
 
-	args = parse_cli()
-	save_path = args.save_path
-	if str(save_path).lower() == 'none':
+	try:
+		args = parse_cli()
+		save_path = args.save_path
+		if str(save_path).lower() == 'none':
+			save_path = None
+	except Exception as e:
 		save_path = None
+		color_print("can't parse cli!", color='red')
+		print(e, end='\n\n')
+
 
 	print('\nParsing all fights...')
 	st = time.perf_counter()
