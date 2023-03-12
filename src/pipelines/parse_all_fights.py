@@ -38,11 +38,15 @@ def parse_cli():
 	args = parser.parse_args()
 	return args
 
-def parse_all_fights(save_path: str=None) -> List[Dict[str, Any]]:
+def parse_all_fights(
+		save_path: str=None,
+		parsed_events_set: Optional[Set[str]]=None,
+	) -> List[Dict[str, Any]]:
 
 	"""
 	Parses all fights and returns list of dicts with fights statistics
 	:param save_path: Path where to save resulting list as a .json file
+	:param parsed_events_set: If current parsed event is already in events_set - don't process it
 	:return: list of dicts with fights statistics
 	"""
 
@@ -55,6 +59,10 @@ def parse_all_fights(save_path: str=None) -> List[Dict[str, Any]]:
 			fights_df[['event_url', 'date', 'location', 'event_name']].itertuples(index=False),
 			total=len(fights_df)
 	):
+		
+		if parsed_events_set is not None and event_uri in parsed_events_set:
+			continue
+
 		one_event = requests.get(event_uri)
 		one_event = BeautifulSoup(one_event.content, 'lxml')
 		one_event = (
@@ -78,7 +86,12 @@ def parse_all_fights(save_path: str=None) -> List[Dict[str, Any]]:
 			all_fights_list.append(fight_stats_dict)
 
 	if save_path is not None and len(all_fights_list) > 0:
-		json.dump(all_fights_list, open(save_path, mode='w', encoding='utf-8'), ensure_ascii=False, indent=2)
+		json.dump(
+			all_fights_list, 
+			open(save_path, mode='w', encoding='utf-8'), 
+			ensure_ascii=False, 
+			indent=2
+		)
 
 	return all_fights_list
 
