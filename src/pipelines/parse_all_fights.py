@@ -114,7 +114,6 @@ if __name__ == '__main__':
 
 	print('\nParsing all fights...')
 	st = time.perf_counter()
-	save_path = args
 	_ = parse_all_fights(save_path=save_path)
 	end = time.perf_counter()
 	color_print(f'all fights parsed for {(end - st) // 60} minutes {round((end - st) % 60)} seconds', color='green')
