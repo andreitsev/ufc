@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import json
 from tqdm import tqdm
 import time
@@ -101,19 +102,28 @@ if __name__ == '__main__':
 	today = str(datetime.now().date())
 	print(f'today: {today}')
 
+	logging.basicConfig(
+		filename=f'/home/aiandrejcev/ufc/logs/parse_all_fights/{str(today)}.log',
+		format='%(asctime)s %(levelname)s %(message)s',
+		datefmt="%Y-%m-%d %H:%M:%S",
+		level=logging.INFO,
+	)
+
+	logging.info('Parsing arguments...')
 	try:
 		args = parse_cli()
 		save_path = args.save_path
 		if str(save_path).lower() == 'none':
 			save_path = None
+		logging.info('done')
 	except Exception as e:
 		save_path = None
 		color_print("can't parse cli!", color='red')
 		print(e, end='\n\n')
 
 
-	print('\nParsing all fights...')
+	logging.info('Parsing all fights...')
 	st = time.perf_counter()
 	_ = parse_all_fights(save_path=save_path)
 	end = time.perf_counter()
-	color_print(f'all fights parsed for {(end - st) // 60} minutes {round((end - st) % 60)} seconds', color='green')
+	logging.info(f'all fights parsed for {(end - st) // 60} minutes {round((end - st) % 60)} seconds')

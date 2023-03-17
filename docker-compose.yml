@@ -1,0 +1,50 @@
+# networks:
+#   ufc-network:
+#     external: true
+
+services:
+
+  minio_container:
+    image: quay.io/minio/minio
+    command: server /data --console-address ":9001"
+    expose:
+      - "9000"
+      - "9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - /home/aiandrejcev/minio/data:/data 
+    env_file:
+      - ~/.minio_env_variables.list 
+
+  pgdatabase:
+    image: postgres:13
+    env_file:
+      - .env
+    volumes:
+      - "/home/aiandrejcev/postgres_docker/data:/var/lib/postgresql/data:rw"
+    ports:
+      - "5432:5432"
+    # networks:
+    #   - ufc-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    env_file:
+      - .env
+    ports:
+      - "8080:80"
+    # networks:
+    #   - ufc-network
+        
+
+# docker run \
+#    -p 9000:9000 \
+#    -p 9001:9001 \
+#    -d \
+#    --name minio_container \
+#    -v ~/minio/data:/data \
+#    --env-file ~/.minio_env_variables.list \
+#    quay.io/minio/minio server /data --console-address ":9001"
+

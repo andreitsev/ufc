@@ -2,6 +2,7 @@ import os
 from os.path import join as p_join
 from dotenv import load_dotenv
 load_dotenv()
+import logging
 from datetime import datetime
 from pathlib import Path
 import sys
