@@ -2,6 +2,6 @@
 *ipynb_checkpoints*
 *__pycache__*
 *env.sh*
-*data*
+*data/*
 *.env*
 *logs*
