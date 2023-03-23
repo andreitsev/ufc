@@ -19,3 +19,7 @@ def eventslist2df(events_list: List[Dict[str, str]]) -> pd.DataFrame:
                 transformed_dict[k] = []
             transformed_dict[k].append(v)
     return pd.DataFrame(transformed_dict)
+
+
+
+

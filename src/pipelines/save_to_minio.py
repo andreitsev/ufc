@@ -16,22 +16,23 @@ import pandas as pd
 
 from minio import Minio
 
-from typing import List, Tuple, Dict, Set, Any, Optional, Callable, Union
 if 'PYTHONPATH' in os.environ:
     PROJECT_PATH = os.environ["PYTHONPATH"]
     sys.path.insert(0, PROJECT_PATH)
 else:
     PROJECT_PATH = '..'
 
-try:
-    from fabulous import color as fb_color
-    color_print = lambda x, color='green': print(getattr(fb_color, color)(x)) if 'fb_color' in globals() else print(x)
-except Exception as e:
-    color_print = lambda x, color='green': print(x)
-
-
-from src.processing import eventslist2df
 from src.pipelines.parse_all_fights import parse_all_fights
+from src.minio_utils import (
+    initialize_minio_client, 
+    load_json_from_minio, 
+    minio_container_ipaddr,
+    save_json_to_minio
+)
+
+MINIO_ACCESS_KEY = os.environ['MINIO_ACCESS_KEY']
+MINIO_SECRET_KEY = os.environ['MINIO_SECRET_KEY']
+
 
 def parse_cli():
     parser = argparse.ArgumentParser()
@@ -56,45 +57,44 @@ def parse_cli():
 if __name__ == '__main__':
 
     today = str(datetime.now().date())
-    print(f'today: {today}')
+    logging.info(f'today: {today}\n')
 
-    MINIO_ACCESS_KEY = os.environ['MINIO_ACCESS_KEY']
-    MINIO_SECRET_KEY = os.environ['MINIO_SECRET_KEY']
+    logging.basicConfig(
+		filename=f'/home/aiandrejcev/ufc/logs/save_to_minio/{str(today)}.log',
+		format='%(asctime)s %(levelname)s %(message)s',
+		datefmt="%Y-%m-%d %H:%M:%S",
+		level=logging.INFO,
+	)
+
 
     args = parse_cli()
 
     ############################### Loading all fights info from minio ####################################
+    logging.info('\n'+ '='*60 + 'Loading all fights info from minio' + '='*60 + '\n')
     all_fights_list = None
     tmp_data_local_path = str(today) + str(int(random.random()*1e6))
-    try:
-        minio_client = Minio(
-            endpoint="172.17.0.2:9000",
-            access_key=MINIO_ACCESS_KEY,
-            secret_key=MINIO_SECRET_KEY,
-            secure=False,
-        )
+    minio_client = initialize_minio_client(
+        ipaddr=minio_container_ipaddr(),
+        access_key=MINIO_ACCESS_KEY,
+        secret_key=MINIO_SECRET_KEY,
+        port_number=9000
+    )
 
-        minio_client.fget_object(
-            bucket_name=args.minio_bucket_name,
-            object_name=args.object_name,
-            file_path=tmp_data_local_path,
-        )
+    logging.info('load_json_from_minio')
+    all_fights_list = load_json_from_minio(
+        minio_client=minio_client,
+        bucket_name=args.minio_bucket_name,
+        object_name=args.minio_object_name,
+    )
+    print(f"len(all_fights_list): {len(all_fights_list):,}")
+    logging.info(f"len(all_fights_list): {len(all_fights_list):,}")
 
-        all_fights_list = json.load(open(tmp_data_local_path, mode='r', encoding='utf-8'))
-        os.remove(tmp_data_local_path)
-    except Exception as e:
-        color_print("Can't load all_fights_list!", color='red')
-        print(e, end='\n'*2)
-
-    ############################## get events, that are already parsed ##############################
-    try:    
-        events_set = set([fight_info['event_uri'] for fight_info in all_fights_list])
-    except Exception as e:
-        events_set = None
-        print(e, end='\n'*2)
-
-
-    ############################## parse rest events ##############################
+    ############################### Getting parsed events set ####################################
+    logging.info('\n'+ '='*60 + 'Getting parsed events set' + '='*60 + '\n')
+    events_set = set([fight_info['event_uri'] for fight_info in all_fights_list])
+    
+    ############################### Parsing fights not in events_set ####################################
+    logging.info('\n'+ '='*60 + "Parsing fights that aren't parsed yet" + '='*60 + '\n')
     all_fights_list_added = parse_all_fights(
         save_path=None,
         parsed_events_set=events_set,
@@ -103,26 +103,16 @@ if __name__ == '__main__':
         all_fights_list = all_fights_list_added
     else:
         all_fights_list.extend(all_fights_list_added)
+    print(f"len(all_fights_list): {len(all_fights_list):,}")
+    logging.info(f"len(all_fights_list): {len(all_fights_list):,}")
 
-    json.dump(
-        all_fights_list, 
-        open(tmp_data_local_path, mode='w', encoding='utf-8'), ensure_ascii=False, indent=2
-    )
-
-    #################################### Putting data to minio ################################################
-    all_fights_list = json.load(open(tmp_data_local_path, mode='r', encoding='utf-8'))
-
-    # creating Minio client
-    minio_client = Minio(
-        endpoint="172.17.0.2:9000",
-        access_key=MINIO_ACCESS_KEY,
-        secret_key=MINIO_SECRET_KEY,
-        secure=False,
-    )
-
-    minio_client.fput_object(
+    ############################### Saving to minio ####################################
+    logging.info("Saving all_fights_list to minio...")
+    save_json_to_minio(
+        obj=all_fights_list,
+        minio_client=minio_client,
         bucket_name=args.minio_bucket_name,
-        object_name=args.object_name,
-        file_path=tmp_data_local_path,
+        object_name=args.minio_object_name,
     )
-    os.remove(tmp_data_local_path)
+    logging.info("Done!")
+
