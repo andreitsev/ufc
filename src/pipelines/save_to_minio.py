@@ -57,15 +57,13 @@ def parse_cli():
 if __name__ == '__main__':
 
     today = str(datetime.now().date())
-    logging.info(f'today: {today}\n')
-
     logging.basicConfig(
 		filename=f'/home/aiandrejcev/ufc/logs/save_to_minio/{str(today)}.log',
 		format='%(asctime)s %(levelname)s %(message)s',
 		datefmt="%Y-%m-%d %H:%M:%S",
 		level=logging.INFO,
 	)
-
+    logging.info(f'today: {today}\n')
 
     args = parse_cli()
 

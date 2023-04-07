@@ -1,7 +1,3 @@
-# networks:
-#   ufc-network:
-#     external: true
-
 services:
 
   minio_container:
@@ -26,8 +22,6 @@ services:
       - "/home/aiandrejcev/postgres_docker/data:/var/lib/postgresql/data:rw"
     ports:
       - "5432:5432"
-    # networks:
-    #   - ufc-network
 
   pgadmin:
     image: dpage/pgadmin4
@@ -35,16 +29,12 @@ services:
       - .env
     ports:
       - "8080:80"
-    # networks:
-    #   - ufc-network
         
-
-# docker run \
-#    -p 9000:9000 \
-#    -p 9001:9001 \
-#    -d \
-#    --name minio_container \
-#    -v ~/minio/data:/data \
-#    --env-file ~/.minio_env_variables.list \
-#    quay.io/minio/minio server /data --console-address ":9001"
-
+  mage_ai_container:
+    image: mageai/mageai:latest
+    ports:
+      - "6789:6789"
+    volumes:
+      - "/home/aiandrejcev/ufc:/home/src"
+    command: /app/run_app.sh mage start demo_project
+    

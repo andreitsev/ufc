@@ -12,6 +12,18 @@ export PYTHONPATH=$PWD
 python src/pipelines/parse_all_fights.py --save_path=<where to save .json result>
 ```
 
+## Start prefect cloud
+
+1. 
+```bash
+prefect orion start
+```
+
+2.
+```bash
+ prefect agent start --pool default-agent-pool --work-queue default
+ ```
+
 
 
 
