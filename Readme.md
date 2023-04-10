@@ -24,6 +24,14 @@ prefect orion start
  prefect agent start --pool default-agent-pool --work-queue default
  ```
 
+3. Run a flow that parses data and loads it to minio with
+```bash
+python src/pipelines/flows/parse_and_save_to_minio.py
+```
 
+3.1 Alternatively (preferably) you can set parsing on schedule
+```bash
+prefect deployment build src/pipelines/flows/parse_and_save_to_minio.py:load_data_to_minio -n parse_data_and_load_to_minio -a
+```
 
 
