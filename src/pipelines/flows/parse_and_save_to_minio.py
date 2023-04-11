@@ -136,8 +136,8 @@ def saving_fights_to_minio(
       log_prints=True,
       task_runner=SequentialTaskRunner())
 def load_data_to_minio(
-    bucket_name: str,
-    object_name: str,
+    bucket_name: str='ufc-raw-data',
+    object_name: str='ufc_stats.json',
     minio_client: Optional[object]=None,
 ):
     # minio_client = get_initialized_minio_client()
