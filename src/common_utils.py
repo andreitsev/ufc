@@ -42,3 +42,29 @@ def prepare_date(date_col: pd.Series) -> pd.Series:
         .apply(lambda x: datetime.strptime(x, "%m-%d-%Y"))
     )
     return res
+
+
+
+def clip_categories(
+    series: pd.Series, 
+    leave_top_n_categories: int=100, 
+    other_category_name: str='other_category'
+) -> pd.Series:
+    """Clips pd.Series if it has more than leave_top_n_categories unique values with other_category_name 
+        value to least common unique values
+
+    Args:
+        series (pd.Series): series that should be clipped
+        leave_top_n_categories (int, optional): How many categories to leave
+        other_category_name (str, optional): With what value to clip least common categories
+
+    Returns:
+        pd.Series: clipped series object
+    """
+    
+    vals_dict = series.value_counts().to_dict()
+    leave_these_values = sorted(vals_dict.items(), key=lambda x: x[1], reverse=True)[:leave_top_n_categories]
+    leave_these_values = set([category_name for category_name, cnt in leave_these_values])
+    mapping_dict = {**{k: other_category_name for k in vals_dict}, **{k: k for k in leave_these_values}}
+    return  series.map(mapping_dict)
+    
