@@ -26,13 +26,13 @@ services:
       - "5432:5432"
     # profiles: ["database"]
 
-  pgadmin:
-    image: dpage/pgadmin4
-    env_file:
-      - .env
-    ports:
-      - "8080:80"
-    # profiles: ["pgadmin"]
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "8080:80"
+  #   # profiles: ["pgadmin"]
         
   ## Prefect Orion API
   orion:
