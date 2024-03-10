@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import json
+from dotenv import load_dotenv
 from tqdm import tqdm
 import time
 from datetime import datetime
@@ -21,11 +22,23 @@ except Exception as e:
 
 import requests
 from bs4 import BeautifulSoup
+from minio import Minio
+from minio.api import Minio as MinioClient
 
 from prefect import task, flow
 
 from src.processing import eventslist2df
 from src.parse_utils import get_events_list, get_one_fight_stats
+from src.minio_utils import (
+    initialize_minio_client, 
+    load_json_from_minio, 
+    minio_container_ipaddr,
+    save_json_to_minio
+)
+
+load_dotenv()
+MINIO_ACCESS_KEY = os.environ['MINIO_ACCESS_KEY']
+MINIO_SECRET_KEY = os.environ['MINIO_SECRET_KEY']
 
 
 def parse_cli():
@@ -40,6 +53,35 @@ def parse_cli():
 
 	args = parser.parse_args()
 	return args
+
+@flow(
+	name='saving_fights_to_minio',
+	retries=3,
+	retry_delay_seconds=10,
+	log_prints=True
+)
+def saving_fights_to_minio(
+    all_fights_list: List[Dict[Any, Any]],
+    bucket_name: str,
+    object_name: str,
+    minio_client: Optional[MinioClient]=None,
+) -> None:
+    
+    if minio_client is None:
+        minio_client = initialize_minio_client(
+            ipaddr=minio_container_ipaddr(),
+            access_key=MINIO_ACCESS_KEY,
+            secret_key=MINIO_SECRET_KEY,
+            port_number=9000
+        )
+
+    save_json_to_minio(
+        obj=all_fights_list,
+        minio_client=minio_client,
+        bucket_name=bucket_name,
+        object_name=object_name,
+    )
+    return
 
 @flow(
 	name='parse_all_fights',
@@ -106,6 +148,22 @@ def parse_all_fights(
 
 	return all_fights_list
 
+@flow(
+	name='main_flow',
+	retries=3,
+	retry_delay_seconds=10,
+	log_prints=True
+)
+def main_flow(save_path: str) -> None:
+	all_fights_list = parse_all_fights(save_path)
+	saving_fights_to_minio(
+		all_fights_list=all_fights_list,
+		bucket_name='ufc-raw-data',
+    	object_name='ufc_stats.json',
+		minio_client=None,
+	)
+	return
+
 
 if __name__ == '__main__':
 
@@ -134,6 +192,7 @@ if __name__ == '__main__':
 
 	logging.info('Parsing all fights...')
 	st = time.perf_counter()
-	_ = parse_all_fights(save_path=save_path)
+	# _ = parse_all_fights(save_path=save_path)
+	main_flow(save_path=args.save_path)
 	end = time.perf_counter()
 	logging.info(f'all fights parsed for {(end - st) // 60} minutes {round((end - st) % 60)} seconds')
