@@ -42,12 +42,15 @@ def parse_cli():
 def parse_all_fights(
 		save_path: str=None,
 		parsed_events_set: Optional[Set[str]]=None,
+		parse_only_n_fights: Optional[int]=None,
 	) -> List[Dict[str, Any]]:
 
 	"""
 	Parses all fights and returns list of dicts with fights statistics
 	:param save_path: Path where to save resulting list as a .json file
 	:param parsed_events_set: If current parsed event is already in events_set - don't process it
+	:param parse_only_n_fights (int): mainly for debugging purposes. 
+		If not None - stops parsing after <parse_only_n_fights> iterations
 	:return: list of dicts with fights statistics
 	"""
 
@@ -56,11 +59,12 @@ def parse_all_fights(
 	fights_df = eventslist2df(fights_list)
 
 	all_fights_list = []
-	for event_uri, event_date, event_location, event_name in tqdm(
-			fights_df[['event_url', 'date', 'location', 'event_name']].itertuples(index=False),
+	for i, (event_uri, event_date, event_location, event_name) in tqdm(
+			enumerate(fights_df[['event_url', 'date', 'location', 'event_name']].itertuples(index=False), start=1),
 			total=len(fights_df)
 	):
-		
+		if parse_only_n_fights is not None and i == parse_only_n_fights:
+			break
 		if parsed_events_set is not None and event_uri in parsed_events_set:
 			continue
 
