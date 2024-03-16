@@ -69,6 +69,7 @@ def load_json_from_minio(
     minio_client: minio.api.Minio,
     bucket_name: str='ufc-raw-data',
     object_name: str='ufc_stats.json',
+    version_id: t.Optional[str]=None,
 ) -> object:
     """Minio -> local -> load local -> delete local"""
 
@@ -83,6 +84,7 @@ def load_json_from_minio(
         bucket_name=bucket_name,
         object_name=object_name,
         file_path=tmp_data_local_path,
+        version_id=version_id,
     )
 
     loaded_object = json.load(open(tmp_data_local_path, mode='r', encoding='utf-8'))

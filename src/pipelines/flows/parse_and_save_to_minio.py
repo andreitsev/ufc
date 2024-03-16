@@ -106,7 +106,6 @@ def parsing_fights_not_in_events(
     all_fights_list_added = parse_all_fights(
         save_path=save_path,
         parsed_events_set=events_set,
-		parse_only_n_fights=None,
     )
     if all_fights_list is None:
         all_fights_list = all_fights_list_added
