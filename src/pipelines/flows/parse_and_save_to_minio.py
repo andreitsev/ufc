@@ -1,9 +1,7 @@
 import os
 import sys
 import logging
-import json
 from dotenv import load_dotenv
-from tqdm import tqdm
 import time
 from datetime import datetime
 import argparse
