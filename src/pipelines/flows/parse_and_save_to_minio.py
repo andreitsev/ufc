@@ -1,9 +1,7 @@
 import os
 import sys
 import logging
-import json
 from dotenv import load_dotenv
-from tqdm import tqdm
 import time
 from datetime import datetime
 import argparse
@@ -27,9 +25,7 @@ from prefect import task, flow
 from prefect.task_runners import SequentialTaskRunner
 
 
-from src.processing import eventslist2df
 from src.pipelines.parse_all_fights import parse_all_fights
-from src.parse_utils import get_events_list, get_one_fight_stats
 from src.minio_utils import (
     initialize_minio_client, 
     load_json_from_minio, 
