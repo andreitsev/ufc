@@ -101,6 +101,16 @@ def load_parsed_fights_from_minio(
     )
 	return all_fights_list
 
+@task(
+	name='get_events_set',
+	retries=3,
+	retry_delay_seconds=10,
+	log_prints=True,
+)
+def get_events_set(fights_infos_list: List[Dict[Any, Any]], verbose: bool=False) -> Set:
+	if verbose:
+		print("get_events_set...")
+	return set([fight_info['event_uri'] for fight_info in fights_infos_list])
 
 @task(
 	name='parsing_fights_not_in_events',
@@ -119,7 +129,6 @@ def parsing_fights_not_in_events(
 	all_fights_list_added = parse_all_fights(
         save_path=save_path,
         parsed_events_set=events_set,
-		# parse_only_n_fights=4,
     )
 	if all_fights_list is None:
 		all_fights_list = all_fights_list_added
@@ -167,28 +176,20 @@ def main_flow(
 	save_path: Optional[str]=None,
 	verbose: bool=False,
 ) -> None:
-	if verbose:
-		print("get_initialized_minio_client...")
 	minio_client = get_initialized_minio_client(verbose=verbose)
-	if verbose:
-		print("load_parsed_fights_from_minio...")
 	parsed_events_from_minio = load_parsed_fights_from_minio(
 		bucket_name=minio_bucket_name, 
 		object_name=minio_object_name,
 		minio_client=minio_client,
 		verbose=verbose
 	)
-	events_set = set([fight_info['event_uri'] for fight_info in parsed_events_from_minio])
-	if verbose:
-		print("parsing_fights_not_in_events...")
+	events_set = get_events_set(fights_infos_list=parsed_events_from_minio, verbose=verbose)
 	all_fights_list = parsing_fights_not_in_events(
 		save_path=save_path,
 		events_set=events_set,
     	all_fights_list=parsed_events_from_minio,
 		verbose=verbose
 	)
-	if verbose:
-		print("saving_fights_to_minio...")
 	saving_fights_to_minio(
 		all_fights_list=all_fights_list,
 		bucket_name=minio_bucket_name,

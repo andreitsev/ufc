@@ -18,6 +18,25 @@ except Exception as e:
 import requests
 from bs4 import BeautifulSoup
 
+fightInfoType = Dict[str, Any]
+
+def get_fight_name(fight_info: fightInfoType) -> str:
+    for col in [
+            'event_name', 
+            'names',
+            'location',
+            'date'
+        ]:
+        assert col in fight_info, \
+            f"{col} should be in fight_info!"
+    fight_name = (
+        str(fight_info['event_name']).replace(' ', '_') + '_'
+        + str(fight_info['names'][0]).replace(' ', '_') + '_' + str(fight_info['names'][1]).replace(' ', '_') + '_'
+        + str(fight_info['location']).replace(' ', '_') + '_'
+        + str(fight_info['date']).replace(' ', '_')
+    ).replace(':', '').replace(',', '').replace('.', '')
+    return fight_name
+
 
 def get_events_list(
 		main_page_url: str="http://www.ufcstats.com/statistics/events/completed?page=all",
