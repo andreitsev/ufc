@@ -162,9 +162,9 @@ def saving_fights_to_minio(
 	task_runner=SequentialTaskRunner()
 )
 def main_flow(
-	save_path: str,
 	minio_bucket_name: str,
 	minio_object_name: str,
+	save_path: Optional[str]=None,
 	verbose: bool=False,
 ) -> None:
 	if verbose:
@@ -217,7 +217,7 @@ if __name__ == '__main__':
 	try:
 		args = parse_cli()
 		save_path = args.save_path
-		if str(save_path).lower() == 'none':
+		if 'none' in str(save_path).lower():
 			save_path = None
 		logging.info('done')
 	except Exception as e:
@@ -229,7 +229,7 @@ if __name__ == '__main__':
 	logging.info('Parsing all fights...')
 	st = time.perf_counter()
 	main_flow(
-		save_path=args.save_path,
+		save_path=save_path,
 		minio_bucket_name=args.minio_bucket_name,
 		minio_object_name=args.minio_object_name,
 		verbose=args.verbose,
