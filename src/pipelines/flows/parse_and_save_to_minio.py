@@ -20,8 +20,6 @@ try:
 except Exception as e:
 	color_print = lambda x, color='green': print(x)
 
-import requests
-from bs4 import BeautifulSoup
 from minio import Minio
 from minio.api import Minio as MinioClient
 
