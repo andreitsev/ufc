@@ -62,5 +62,5 @@ prefect worker start --pool "ufc_pool"
 
 4. Make deployment in separate tmux session
 ```bash
-prefect deploy src/pipelines/flows/parse_and_save_to_minio.py:main_flow -n parse_and_save_to_minio -p ufc_pool
+prefect deploy src/pipelines/flows/parse_and_save_to_minio.py:main_flow -n parse_and_save_to_minio -p ufc_pool --params='{"verbose":true,"minio_bucket_name":"ufc-raw-data","minio_object_name":"ufc_stats.json"}'
 ```

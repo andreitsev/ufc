@@ -36,16 +36,31 @@ deployments:
   tags: []
   description:
   entrypoint: src/pipelines/flows/parse_and_save_to_minio.py:main_flow
-  parameters: {
-    "minio_bucket_name": "ufc-raw-data",
-    "minio_object_name": "ufc_stats.json",
-  }
+  parameters: {}
   work_pool:
     name: ufc_pool
     work_queue_name:
     job_variables: {}
   schedules:
   - cron: 0 3 * * 1
+    timezone: UTC
+    day_or: true
+    active: true
+- name: parse_and_save_to_minio_v2
+  version:
+  tags: []
+  description:
+  entrypoint: src/pipelines/flows/parse_and_save_to_minio.py:main_flow
+  parameters:
+    verbose: true
+    minio_bucket_name: ufc-raw-data
+    minio_object_name: ufc_stats.json
+  work_pool:
+    name: ufc_pool
+    work_queue_name:
+    job_variables: {}
+  schedules:
+  - cron: 50 17 * * 1
     timezone: UTC
     day_or: true
     active: true
