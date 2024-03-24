@@ -175,6 +175,7 @@ def main_flow(
 	minio_bucket_name: str,
 	minio_object_name: str,
 	save_path: Optional[str]=None,
+	save_to_postgres: bool=True,
 	verbose: bool=False,
 ) -> None:
 	minio_client = get_initialized_minio_client(verbose=verbose)
@@ -198,18 +199,19 @@ def main_flow(
 		minio_client=minio_client,
 		verbose=verbose
 	)
-	try:
-		print('Uploading data to raw_data.all_fights_info in postgres...')
-		eng = get_pg_engine()
-		minio_data_to_postgres(
-			all_fights_list=all_fights_list,
-			schema='raw_data',
-			table_name='all_fights_info',
-			engine=eng
-		)
-	except Exception as e:
-		print('Failed to upload data to raw_data.all_fights_info in postgres!')
-		print(e, end='\n'*2)
+	if save_to_postgres:
+		try:
+			print('Uploading data to raw_data.all_fights_info in postgres...')
+			eng = get_pg_engine()
+			minio_data_to_postgres(
+				all_fights_list=all_fights_list,
+				schema='raw_data',
+				table_name='all_fights_info',
+				engine=eng
+			)
+		except Exception as e:
+			print('Failed to upload data to raw_data.all_fights_info in postgres!')
+			print(e, end='\n'*2)
 	if verbose:
 		print("OK!")
 	return
