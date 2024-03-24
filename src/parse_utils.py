@@ -34,7 +34,9 @@ def get_fight_name(fight_info: fightInfoType) -> str:
         + str(fight_info['names'][0]).replace(' ', '_') + '_' + str(fight_info['names'][1]).replace(' ', '_') + '_'
         + str(fight_info['location']).replace(' ', '_') + '_'
         + str(fight_info['date']).replace(' ', '_')
-    ).replace(':', '').replace(',', '').replace('.', '')
+    ).replace(':', '').replace(',', '').replace('.', '').replace('-', '_')
+    while "__" in fight_name:
+        fight_name = fight_name.replace('__', '_')
     return fight_name
 
 

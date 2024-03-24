@@ -3,6 +3,10 @@ from collections import deque
 from typing import List, Tuple, Dict, Set, Any, Optional, Callable, Union
 import pandas as pd
 
+from sqlalchemy.engine.base import Engine
+
+from src.db_utils import get_pg_engine
+
 
 def eventslist2df(events_list: List[Dict[str, str]]) -> pd.DataFrame:
 
@@ -124,3 +128,25 @@ def minio_data_to_pandas(
                 print(e, end='\n')
     return pd.DataFrame(res_list)
 
+
+def minio_data_to_postgres(
+        all_fights_list: List[Any],
+        schema: str='raw_data',
+        table_name: str='all_fights_info',
+        engine: Optional[Engine]=None,
+    ) -> None:
+    if engine is None:
+        engine = get_pg_engine()
+
+    with engine.connect() as conn:
+        conn.execute(f'create schema if not exists {schema}')
+
+    res_df = minio_data_to_pandas(all_fights_list=all_fights_list)
+    res_df.to_sql(
+        name=table_name,
+        con=engine,
+        schema=schema,
+        if_exists='replace',
+        index=False
+    )
+    return 

@@ -25,7 +25,7 @@ from prefect import task, flow
 from prefect.task_runners import SequentialTaskRunner
 
 
-from src.processing import eventslist2df
+from src.processing import minio_data_to_pandas, minio_data_to_postgres
 from src.pipelines.parse_all_fights import parse_all_fights
 from src.parse_utils import get_events_list, get_one_fight_stats
 from src.minio_utils import (
@@ -34,6 +34,7 @@ from src.minio_utils import (
     minio_container_ipaddr,
     save_json_to_minio
 )
+from src.db_utils import get_pg_engine
 
 load_dotenv()
 MINIO_ACCESS_KEY = os.environ['MINIO_ACCESS_KEY']
@@ -197,6 +198,18 @@ def main_flow(
 		minio_client=minio_client,
 		verbose=verbose
 	)
+	try:
+		print('Uploading data to raw_data.all_fights_info in postgres...')
+		eng = get_pg_engine()
+		minio_data_to_postgres(
+			all_fights_list=all_fights_list,
+			schema='raw_data',
+			table_name='all_fights_info',
+			engine=eng
+		)
+	except Exception as e:
+		print('Failed to upload data to raw_data.all_fights_info in postgres!')
+		print(e, end='\n'*2)
 	if verbose:
 		print("OK!")
 	return
