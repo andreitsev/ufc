@@ -135,11 +135,14 @@ def minio_data_to_postgres(
         table_name: str='all_fights_info',
         engine: Optional[Engine]=None,
     ) -> None:
+
+    from sqlalchemy.schema import CreateSchema
+
     if engine is None:
         engine = get_pg_engine()
 
-    with engine.connect() as conn:
-        conn.execute(f'create schema if not exists {schema}')
+    if not engine.dialect.has_schema(engine, schema):
+        engine.execute(CreateSchema(schema))
 
     res_df = minio_data_to_pandas(all_fights_list=all_fights_list)
     res_df.to_sql(
