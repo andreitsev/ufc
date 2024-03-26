@@ -87,14 +87,15 @@ def bfs_dict(
         # which we want to change into 'fighter<1/2>'
         if k.startswith('winloose_'):
             if not processed_first_winloose_fighter:
-                k = 'winloose_fighter1'
+                k = f'fighter1{union_filed_identifier}winloose'
                 processed_first_winloose_fighter = True
             else:
-                k = 'winloose_fighter2'
+                k = f'fighter2{union_filed_identifier}winloose'
 
         if isinstance(v, list):
             for i, elem in enumerate(v, start=1):
-                resulting_dict[f"{k}{union_filed_identifier}{i}"] = elem
+                # resulting_dict[f"{k}{union_filed_identifier}{i}"] = elem
+                resulting_dict[f"fighter{i}{union_filed_identifier}{k}"] = elem
         elif isinstance(v, dict):
             for sub_k, sub_v in v.items():
                 queue.append((f"{k}{union_filed_identifier}{sub_k}", sub_v))
